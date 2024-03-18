@@ -1,0 +1,46 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/gradient_back"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <RelativeLayout
+            android:id="@+id/header_demo"
+            android:layout_width="match_parent"
+            android:layout_height="176dp"
+            android:background="@color/transparent">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/user_profile_img_Demo"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_centerInParent="true"
+                android:src="@mipmap/ic_launcher"
+                app:shapeAppearanceOverlay="@style/circular_background" />
+
+            <ImageButton
+                android:id="@+id/select_and_set_image"
+                style="@style/circular_background"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignEnd="@+id/user_profile_img_Demo"
+                android:layout_alignBottom="@+id/user_profile_img_Demo"
+                android:background="@drawable/circular_background"
+                android:contentDescription="@string/header_image"
+                android:src="@drawable/ic_camera_alt" />
+
+        </RelativeLayout>
+
+        <FrameLayout
+            android:id="@+id/settings"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/header_demo"
+             />
+    </RelativeLayout>
+
+</LinearLayout>

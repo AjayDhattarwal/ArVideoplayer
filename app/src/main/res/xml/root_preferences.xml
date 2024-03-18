@@ -1,0 +1,51 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <PreferenceCategory app:title="@string/User_Info">
+
+
+        <EditTextPreference
+            app:key="username"
+            app:title="@string/signature_title"
+            app:useSimpleSummaryProvider="true"
+            android:inputType="text"
+            android:imeOptions="actionDone"
+            />
+        <EditTextPreference
+            app:key="usermail"
+            app:title="@string/signature_email"
+            app:useSimpleSummaryProvider="true"
+            android:inputType="textEmailAddress"
+            android:imeOptions="actionDone"
+            />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/sync_header">
+        <ListPreference
+            app:defaultValue="language"
+            app:entries="@array/language_entries"
+            app:entryValues="@array/language_values"
+            app:key="language"
+            app:title="@string/default_language"
+            app:useSimpleSummaryProvider="true"/>
+        <ListPreference
+            app:defaultValue="download"
+            app:entries="@array/download_entries"
+            app:entryValues="@array/download_values"
+            app:key="download"
+            app:title="@string/download_quality"
+            app:useSimpleSummaryProvider="true" />
+
+
+        <SwitchPreferenceCompat
+            app:key="autoplay"
+            app:title="@string/auto_play" />
+
+
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
+

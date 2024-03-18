@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.User.WatchList"
+    android:background="@drawable/gradient_back">
+
+<!--    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout-->
+<!--        android:id="@+id/swipe_refresh_watchlist"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content">-->
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/watchlistRecyclerView_activity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+        <com.google.android.gms.ads.AdView
+            android:id="@+id/banner_watch_adView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            app:adSize="BANNER"
+            app:adUnitId="ca-app-pub-9633578355774891/3323073469" />
+<!--    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>-->
+
+</RelativeLayout>

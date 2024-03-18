@@ -1,0 +1,40 @@
+<!-- layout_popup_speed.xml -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@color/white">
+
+    <Button
+        android:id="@+id/btnSlowSpeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0.5"
+        android:textColor="@color/black"
+        android:backgroundTint="#61A3A3A3"/>
+
+    <Button
+        android:id="@+id/btnNormalSpeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="1x"
+        android:textColor="@color/black"
+        android:backgroundTint="#61A3A3A3"/>
+
+    <Button
+        android:id="@+id/btnFastSpeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="1.5x"
+        android:textColor="@color/black"
+        android:backgroundTint="#61A3A3A3"/>
+
+
+
+    <!-- Add more speed options here if needed -->
+
+
+
+</LinearLayout>

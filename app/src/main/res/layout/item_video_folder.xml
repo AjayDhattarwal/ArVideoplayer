@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/layout/item_video_folder.xml -->
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/transparent"
+    android:padding="10dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical"
+        android:layout_centerVertical="true">
+
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_local_24"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/folder_name_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:text="@string/folder_name"
+                android:maxLines="1"
+                android:textColor="@color/white"
+                android:layout_marginStart="16dp"
+                android:focusableInTouchMode="true"/>
+            <TextView
+                android:id="@+id/no_of_videos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:text="12 Videos"
+                android:maxLines="1"
+                android:textColor="#DAE9EF"
+                android:layout_marginStart="16dp"
+                android:focusableInTouchMode="true"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+</RelativeLayout>

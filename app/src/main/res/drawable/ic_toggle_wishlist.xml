@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:targetApi="lollipop"
+    android:drawable="@drawable/ic_add_stream">
+
+
+    <target
+        android:animation="@anim/wishlist_toggle_animation"
+        android:name="redot"/>
+
+</animated-vector>

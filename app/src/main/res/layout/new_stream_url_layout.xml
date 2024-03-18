@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/layout/custom_dialog.xml -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/rounded_background"
+    android:theme="@style/SettingsActivity_theme">
+
+
+    <EditText
+        android:id="@+id/url_dialog_editText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="15"
+        android:ellipsize="end"
+        android:hint="@string/enter_url_and_id"
+        android:padding="20dp"
+        android:singleLine="true"
+        android:textColor="@color/white"
+        android:textColorHint="@color/gray"/>
+
+    <!-- Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:paddingTop="20dp">
+
+        <!-- Cancel Button -->
+        <TextView
+            android:id="@+id/url_dialog_btnCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cancel"
+            android:layout_marginEnd="20dp"
+            android:textColor="@color/white"/>
+
+        <!-- Stream Button -->
+        <TextView
+            android:id="@+id/url_dialog_btnStream"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/stream"
+            android:textColor="@color/light_blue_600"/>
+    </LinearLayout>
+</LinearLayout>

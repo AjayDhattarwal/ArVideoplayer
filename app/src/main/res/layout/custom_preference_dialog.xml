@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/rounded_background">
+
+    <!-- Add your custom layout content here, e.g., an EditText -->
+    <EditText
+        android:id="@android:id/edit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:hint="Your Hint"
+        android:imeOptions="actionDone"
+        android:inputType="textEmailAddress" />
+
+</RelativeLayout>

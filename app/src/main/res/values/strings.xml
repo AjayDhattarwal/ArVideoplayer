@@ -1,0 +1,91 @@
+<resources>
+    <string name="app_name">AR Player</string>
+    <string name="title_activity_video_player">VideoPlayerActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="speed_control" translatable="false">speed control</string>
+    <string name="audio_track">Audio Track</string>
+    <string name="quality">quality selection</string>
+    <string name="controls_settings">Settings</string>
+    <string name="subtitle_support">subtitles</string>
+    <string name="full_screen">full screen</string>
+    <string name="play_pause">play and pause</string>
+    <string name="select_speed">Select Speed</string>
+    <string name="normal_speed">"1.0x "</string>
+    <string name="fast_speed">1.5x</string>
+    <string name="exit">exit</string>
+    <string name="unknown">unknown</string>
+    <string name="gmail.com">unknown@gmail.com</string>
+    <string name="report_an_issue">Report an Issue</string>
+    <string name="settings">Settings</string>
+    <string name="search">search</string>
+    <string name="search_view">Movies,Shows and more</string>
+    <string name="OpenDrawer">Open navigation drawer</string>
+    <string name="CloseDrawer">Close navigation drawer</string>
+    <string name="title_activity_bottom_nav">activity_bottom_nav</string>
+    <string name="title_home">Home</string>
+    <string name="title_search">Search</string>
+    <string name="title_local">Local</string>
+    <string name="title_myList">MyList</string>
+    <string name="title_user">User</string>
+
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="image_url">Image url</string>
+    <string name="signature_title">User Name</string>
+    <string name="signature_email">User Email</string>
+
+
+    <!-- Sync Preferences -->
+    <string name="download_quality">Default Download Quality</string>
+    <string name="default_language">Default App Language</string>
+    <string name="auto_play">Auto Play</string>
+    <string name="User_Info">UserInfo</string>
+    <string name="movies">Movies</string>
+    <string name="series">Series</string>
+    <string name="genre">Genre</string>
+    <string name="languages">Languages</string>
+    <string name="downloads">Downloads</string>
+    <string name="header_image">Header Image</string>
+    <string name="watchlist">Watchlist</string>
+    <string name="help_support"><![CDATA[Help & Support]]></string>
+    <string name="logout">Logout</string>
+    <string name="folder_name">Folder Name</string>
+    <string name="video_title">Video_title</string>
+    <string name="resize_button_description">resize_video</string>
+    <string name="enter_url_and_id">Enter url and id</string>
+    <string name="stream">Stream</string>
+    <string name="cancel">Cancel</string>
+    <string name="what_do_you_want">What do you want!</string>
+    <string name="play_video">Play Video</string>
+    <string name="rename">Rename</string>
+    <string name="share">Share</string>
+    <string name="delete">Delete</string>
+    <string name="information">Information</string>
+    <string name="file_info">File Info</string>
+    <string name="tab_quality">Quality\n</string>
+    <string name="tab_audio_language">Audio Language</string>
+    <string name="tab_subtitles">Subtitles</string>
+    <string name="continue_watching">Continue Watching</string>
+    <string name="remove_from_continue_watching">Remove from Continue Watching</string>
+    <string name="s01_e01_title">S01 E01 title</string>
+    <string name="story">Emily found a magical book in her attic and entered a world of talking animals. Together, they fought darkness, learning about courage and friendship. Emily returned home transformed by her adventure.</string>
+    <string name="ic_plus_path">M12,2C6.48,2…</string>
+    <string name="ic_checkmark_path">M9,16.17L4.83,12…</string>
+    <string name="file_name">Filename</string>
+    <string name="Time">Time</string>
+    <string name="save_path">Save Path</string>
+    <string name="History">History</string>
+    <string name="_2x_speed">" 2x_speed "</string>
+
+
+</resources>

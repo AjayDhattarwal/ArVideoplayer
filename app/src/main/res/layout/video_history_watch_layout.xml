@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- item_video.xml -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="180dp"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:id="@+id/his_watch_view">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="110dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:background="@color/transparent"
+            app:cardCornerRadius="10dp">
+
+            <ImageView
+                android:id="@+id/videoThumbnailImageView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:background="@drawable/ic_image_search"/>
+            <TextView
+                android:id="@+id/videoLengthTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00:00"
+                android:gravity="center_horizontal"
+                android:textSize="12sp"
+                android:layout_margin="3dp"
+                android:textColor="@android:color/white"
+                android:layout_gravity="bottom|end"
+                />
+
+        </androidx.cardview.widget.CardView>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="3dp"
+            >
+
+            <TextView
+                android:id="@+id/videoTitleTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:ellipsize="end"
+                android:ems="7"
+                android:maxLines="1"
+                android:text="@string/video_title"
+                android:textColor="@android:color/white"
+                android:textSize="16sp" />
+
+            <ImageView
+                android:id="@+id/his_watch_menu_btn"
+                android:layout_width="20dp"
+                android:layout_height="17dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/baseline_more_vert_24" />
+
+
+        </RelativeLayout>
+    </LinearLayout>
+
+</RelativeLayout>
