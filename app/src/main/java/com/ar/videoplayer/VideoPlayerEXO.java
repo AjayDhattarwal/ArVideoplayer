@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.app.PictureInPictureParams;
 import android.app.RemoteAction;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -20,6 +21,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Icon;
 import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
+import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -27,6 +29,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -52,6 +57,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.media.session.MediaButtonReceiver;
 import androidx.viewpager.widget.ViewPager;
 
 import com.airbnb.lottie.LottieAnimationView;
@@ -117,47 +123,53 @@ import okhttp3.Response;
 
 public class VideoPlayerEXO extends AppCompatActivity {
 
+    private SimpleExoPlayer player;
     private static final int ACTION_MANAGE_WRITE_SETTINGS_CODE = 110;
     private MovieInfo movieInfo;
     Dialog dialog;
     private int device_width, brightness;
-    boolean start = false,left ,right;
+    boolean start = false, left, right;
     private float baseX, baseY;
-    private long diffX,diffY;
+    private long diffX, diffY;
     public static final int MINIMUM_DISTANCE = 100;
     boolean success = false, singleTap = false, swipe_move = false;
     private TextView vol_text, brt_text;
     private ProgressBar vol_progress, brt_progress;
     ProgressBar loadingProgressBar;
     private LinearLayout vol_progress_container, vol_text_container, brt_progress_container, brt_text_container;
-    private ImageView vol_icon,brt_icon;
+    private ImageView vol_icon, brt_icon;
     private float scaleFactor = 1.0f, maxScaleFactor = 3.0f;
     private boolean isZoomedIn = false;
     private AudioManager audioManager;
+
+    private BroadcastReceiver headsetButtonReceiver;
+    private PhoneStateListener phoneStateListener;
+    private TelephonyManager telephonyManager;
     private ContentResolver contentResolver;
+
     private Window window;
     private Uri videoUri;
-    private SimpleExoPlayer player;
+
     private PlayerView playerView;
     private int currentVideoQualityIndex = 0;
     List<String> qualityOptions = new ArrayList<>();
     private ImageButton btnPlayPause;
-    ImageButton forward_btn,backward_btn;
-    private int forwardOffset = 0,backwardOffset = 0;
+    ImageButton forward_btn, backward_btn;
+    private int forwardOffset = 0, backwardOffset = 0;
     TextView forwardsectext, backwardsectext;
     ImageButton btnFullScreen;
     private int currentMode = AspectRatioFrameLayout.RESIZE_MODE_FIT;
     private SeekBar seekBar;
-    private boolean isSeeking = false,isFullScreen = false;
-    private TextView tvTotalDuration, tvCurrDuration ;
-    private long currentPosition,duration;
+    private boolean isSeeking = false, isFullScreen = false;
+    private TextView tvTotalDuration, tvCurrDuration;
+    private long currentPosition, duration;
     private Handler handler;
-    boolean isInPiPMode = false,isPlayingInPiP = false;
+    boolean isInPiPMode = false, isPlayingInPiP = false;
     private LinearLayout settingsButton;
     private ViewPager viewPager;
     private DefaultTrackSelector trackSelector;
     int currentAudioTrack = 1;
-    LinearLayout customButtonLayout,customButtonLayout0,customButtonLayout2;
+    LinearLayout customButtonLayout, customButtonLayout0, customButtonLayout2;
     private String[] audioTrackNames;
     private List<ImageView> imageViews = new ArrayList<>();
     private List<TextView> textViews = new ArrayList<>();
@@ -166,17 +178,17 @@ public class VideoPlayerEXO extends AppCompatActivity {
     private List<ImageView> subtitleImageViews = new ArrayList<>();
     private List<TextView> subtitleTextViews = new ArrayList<>();
     private ImageButton exitPlayerActivity;
-    private String artist,date,videoFileName,storylines,releaseDate,thumbnailUrl,size,resolution,sub_title_pot;
+    private String artist, date, videoFileName, storylines, releaseDate, thumbnailUrl, size, resolution, sub_title_pot;
     private List<String> cast;
     private String[] genre;
     private Float rating = 4.5f;
-    private TextView video_title, title_portrait,sub_title_portrait,storyLine_portrait;
+    private TextView video_title, title_portrait, sub_title_portrait, storyLine_portrait;
     private RatingBar ratingBar;
-    private RelativeLayout wishlistToggleButton,share_video_Button;
-    private Animation slideLeftAnimation,slideRightAnimation;
+    private RelativeLayout wishlistToggleButton, share_video_Button;
+    private Animation slideLeftAnimation, slideRightAnimation;
     private int flagOrientation;
     private static final float GESTURE_THRESHOLD = 50.0f;
-    long totalDuration,tillWatched;
+    long totalDuration, tillWatched;
     private DatabaseHelper databaseHelper;
     private LottieAnimationView animationView;
     boolean isInWatchList = false;
@@ -185,6 +197,7 @@ public class VideoPlayerEXO extends AppCompatActivity {
     AdLoader adLoader;
     boolean isLongPressing = false;
     TextView two_x_speed;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -227,8 +240,8 @@ public class VideoPlayerEXO extends AppCompatActivity {
                     Toast.makeText(this, "File not found", Toast.LENGTH_SHORT).show();
                     videoUri = intent.getData();
                 }
-                String s= String.valueOf(videoUri);
-                Log.d("videoPathWhileOpenWith", s );
+                String s = String.valueOf(videoUri);
+                Log.d("videoPathWhileOpenWith", s);
             } else {
                 // Unsupported file type
                 Toast.makeText(this, "Unsupported file type", Toast.LENGTH_SHORT).show();
@@ -242,20 +255,20 @@ public class VideoPlayerEXO extends AppCompatActivity {
         getWindow().setAttributes(params);
 
         initView();
-        if( getIntent().getSerializableExtra("movie_info") != null){
+        if (getIntent().getSerializableExtra("movie_info") != null) {
             movieInfo = (MovieInfo) getIntent().getSerializableExtra("movie_info");
             videoUri = Uri.parse(movieInfo.getVideoPath());
-            if(movieInfo.getVideoPath().startsWith("http")){
+            if (movieInfo.getVideoPath().startsWith("http")) {
                 videoFileName = movieInfo.getTitle();
             }
             storylines = movieInfo.getStoryLines();
             artist = movieInfo.getArtists();
             genre = movieInfo.getGenre();
-            if(videoFileName == null){
+            if (videoFileName == null) {
                 videoFileName = movieInfo.getDisplayName();
             }
             sub_title_pot = movieInfo.getSubText();
-            if(movieInfo.getRating() != null){
+            if (movieInfo.getRating() != null) {
                 rating = movieInfo.getRating();
             }
             releaseDate = movieInfo.getReleaseDate();
@@ -273,11 +286,10 @@ public class VideoPlayerEXO extends AppCompatActivity {
             initializePlayer(videoUri);
         }
         TableClass.WatchlistItem watchlistItemExists = databaseHelper.hisWatchDao().getWatchListItemByPath(String.valueOf(videoUri));
-        if(watchlistItemExists != null){
+        if (watchlistItemExists != null) {
             isInWatchList = true;
-            animationView.setMinAndMaxProgress(0.5f,1.0f);
-        }
-        else{
+            animationView.setMinAndMaxProgress(0.5f, 1.0f);
+        } else {
             isInWatchList = false;
         }
 
@@ -293,27 +305,26 @@ public class VideoPlayerEXO extends AppCompatActivity {
                 scaleFactor *= detector.getScaleFactor();
                 scaleFactor = Math.max(1.0f, Math.min(scaleFactor, maxScaleFactor));
 
-        //                // Apply scaling only to the PlayerView
-        //                playerView.getVideoSurfaceView().setScaleX(scaleFactor);
-        //                playerView.getVideoSurfaceView().setScaleY(scaleFactor);
+                //                // Apply scaling only to the PlayerView
+                //                playerView.getVideoSurfaceView().setScaleX(scaleFactor);
+                //                playerView.getVideoSurfaceView().setScaleY(scaleFactor);
 
                 if (scaleFactor > 1.0f && !isZoomedIn) {
-                playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
-                isZoomedIn = true;
+                    playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
+                    isZoomedIn = true;
                 } else if (scaleFactor <= 1.0f && isZoomedIn) {
-                playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
-                isZoomedIn = false;
+                    playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
+                    isZoomedIn = false;
                 }
             }
 
-        }){
+        }) {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 int pointerCount = motionEvent.getPointerCount();
-                if(pointerCount == 2){
+                if (pointerCount == 2) {
                     GesturesOfVideos.scaleGestureDetector.onTouchEvent(motionEvent);
-                }
-                else {
+                } else {
                     if (isFullScreen) {
                         switch (motionEvent.getAction()) {
                             case MotionEvent.ACTION_DOWN:
@@ -434,23 +445,23 @@ public class VideoPlayerEXO extends AppCompatActivity {
                 playerView.findViewById(R.id.controlsLayout).setVisibility(View.INVISIBLE);
                 singleTap = true;
                 super.onDoubleTouch(motionEvent);
-                    float screenWidth = getResources().getDisplayMetrics().widthPixels;
-                    if (motionEvent.getX() < screenWidth / 2) {
-                        seekBackward();
-                    } else {
-                        seekForward();
-                    }
+                float screenWidth = getResources().getDisplayMetrics().widthPixels;
+                if (motionEvent.getX() < screenWidth / 2) {
+                    seekBackward();
+                } else {
+                    seekForward();
+                }
             }
 
             @Override
             public void onSingleTouch() {
                 super.onSingleTouch();
-                Log.d("doubleTap","singletaped");
-                if(singleTap){
+                Log.d("doubleTap", "singletaped");
+                if (singleTap) {
                     playerView.findViewById(R.id.controlsLayout).setVisibility(View.VISIBLE);
                     playerView.showController();
                     singleTap = false;
-                }else{
+                } else {
                     playerView.hideController();
                     singleTap = true;
                 }
@@ -459,7 +470,7 @@ public class VideoPlayerEXO extends AppCompatActivity {
             @Override
             public void onLongPressTouch() {
                 super.onLongPressTouch();
-                if(isFullScreen){
+                if (isFullScreen) {
                     setPlaybackSpeed(2.0f);
                     isLongPressing = true;
                     two_x_speed.setVisibility(View.VISIBLE);
@@ -476,29 +487,29 @@ public class VideoPlayerEXO extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (isInWatchList) {
-                    animationView.setMinAndMaxProgress(0.5f,1.0f);
+                    animationView.setMinAndMaxProgress(0.5f, 1.0f);
                     animationView.playAnimation();
                     databaseHelper.hisWatchDao().deleteWatchlistItem(databaseHelper.hisWatchDao().getWatchListItemByPath(String.valueOf(videoUri)));
                     isInWatchList = false;
                 } else {
-                    animationView.setMinAndMaxProgress(0.0f,0.5f);
+                    animationView.setMinAndMaxProgress(0.0f, 0.5f);
                     animationView.playAnimation();
                     isInWatchList = true;
-                    databaseHelper.hisWatchDao().insertWatchlistItem(new TableClass.WatchlistItem(String.valueOf(videoUri),videoFileName,formatTime(totalDuration),currentPosition,size,resolution,sub_title_pot,rating));
+                    databaseHelper.hisWatchDao().insertWatchlistItem(new TableClass.WatchlistItem(String.valueOf(videoUri), videoFileName, formatTime(totalDuration), currentPosition, size, resolution, sub_title_pot, rating));
                 }
             }
         });
         share_video_Button.setOnClickListener(view -> {
-            if(movieInfo.getVideoPath().startsWith("http")){
+            if (movieInfo.getVideoPath().startsWith("http")) {
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
                 shareIntent.setType("text/plain");
-                shareIntent.putExtra(Intent.EXTRA_TEXT,movieInfo.getVideoPath());
-                startActivity(Intent.createChooser(shareIntent,"Share Video via"));
-            }else{
+                shareIntent.putExtra(Intent.EXTRA_TEXT, movieInfo.getVideoPath());
+                startActivity(Intent.createChooser(shareIntent, "Share Video via"));
+            } else {
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
                 shareIntent.setType("video/*");
-                shareIntent.putExtra(Intent.EXTRA_STREAM,videoUri);
-                startActivity(Intent.createChooser(shareIntent,"Share Video via"));
+                shareIntent.putExtra(Intent.EXTRA_STREAM, videoUri);
+                startActivity(Intent.createChooser(shareIntent, "Share Video via"));
 
             }
         });
@@ -520,15 +531,13 @@ public class VideoPlayerEXO extends AppCompatActivity {
                 if (player != null && player.getCurrentPosition() >= player.getDuration()) {
                     // If the video has completed, prevent seeking beyond the end of the video
                     player.seekTo(player.getDuration());
-                }
-                else{
+                } else {
                     currentPosition += 10000;
-                    forwardOffset+=10;
-                    if(currentPosition > player.getDuration()){
+                    forwardOffset += 10;
+                    if (currentPosition > player.getDuration()) {
                         player.seekTo(player.getDuration());
                         currentPosition = player.getDuration();
-                    }
-                    else {
+                    } else {
                         player.seekTo(currentPosition);
 
                     }
@@ -537,7 +546,7 @@ public class VideoPlayerEXO extends AppCompatActivity {
                 forwardsectext.setVisibility(View.VISIBLE);
                 backwardsectext.setVisibility(View.INVISIBLE);
 
-             }
+            }
 
         });
 
@@ -546,17 +555,15 @@ public class VideoPlayerEXO extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 backward_btn.startAnimation(slideLeftAnimation);
-                if(player != null && player.getDuration() <= 10000){
+                if (player != null && player.getDuration() <= 10000) {
                     player.seekTo(0);
-                }
-                else{
+                } else {
                     currentPosition -= 10000;
-                    backwardOffset +=10;
-                    if(currentPosition <= 0){
+                    backwardOffset += 10;
+                    if (currentPosition <= 0) {
                         player.seekTo(0);
                         currentPosition = 0;
-                    }
-                    else{
+                    } else {
                         player.seekTo(currentPosition);
                     }
                 }
@@ -589,7 +596,6 @@ public class VideoPlayerEXO extends AppCompatActivity {
         });
 
 
-
         btnFullScreen.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -619,7 +625,6 @@ public class VideoPlayerEXO extends AppCompatActivity {
 
             }
         });
-
 
 
         // Set the seek bar change listener
@@ -674,12 +679,12 @@ public class VideoPlayerEXO extends AppCompatActivity {
         });
 
 
-         btnQuality.setOnClickListener(new View.OnClickListener() {
-             @Override
-             public void onClick(View view) {
-                 showPopup(0);
-             }
-         });
+        btnQuality.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showPopup(0);
+            }
+        });
         btnAudio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -698,11 +703,11 @@ public class VideoPlayerEXO extends AppCompatActivity {
         exitPlayerActivity.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(isFullScreen){
+                if (isFullScreen) {
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
                     exitFullScreenMode();
                     undefinedOrientation();
-                }else{
+                } else {
                     onBackPressed();
                 }
             }
@@ -727,10 +732,10 @@ public class VideoPlayerEXO extends AppCompatActivity {
     }
 
     private void setMethods() {
-        if(videoFileName == null){
+        if (videoFileName == null) {
             title_portrait.setText("Unknown");
             video_title.setText("Unknown");
-        }else{
+        } else {
             title_portrait.setText(videoFileName);
             video_title.setText(videoFileName);
         }
@@ -740,23 +745,22 @@ public class VideoPlayerEXO extends AppCompatActivity {
     }
 
 
-
-
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         int action = event.getAction();
         int keyCode = event.getKeyCode();
 
 
-        if(isFullScreen){
+        if (isFullScreen) {
             if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
 
                 // Handle volume key event
                 if (action == KeyEvent.ACTION_DOWN) {
                     // Adjust the volume using AudioManager
                     int direction = (keyCode == KeyEvent.KEYCODE_VOLUME_UP) ? AudioManager.ADJUST_RAISE : AudioManager.ADJUST_LOWER;
-                    Log.d("direction", "direction:  "+direction);
-                    int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);;
+                    Log.d("direction", "direction:  " + direction);
+                    int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                    ;
                     adjustVolume(direction, maxVolume);
                     playerView.showController();
                     playerView.findViewById(R.id.controlsLayout).setVisibility(View.GONE);
@@ -806,8 +810,8 @@ public class VideoPlayerEXO extends AppCompatActivity {
         loadingProgressBar = playerView.findViewById(R.id.loadingProgressBar);
         video_title = playerView.findViewById(R.id.video_Title);
         btnPlayPause = playerView.findViewById(R.id.btnPlayPause);
-        backwardsectext  = playerView.findViewById(R.id.backwardsectext);
-        forwardsectext  = playerView.findViewById(R.id.forwardsectext);
+        backwardsectext = playerView.findViewById(R.id.backwardsectext);
+        forwardsectext = playerView.findViewById(R.id.forwardsectext);
         forward_btn = playerView.findViewById(R.id.forwardsecicon);
         backward_btn = playerView.findViewById(R.id.backwardsecicon);
         slideRightAnimation = AnimationUtils.loadAnimation(this, R.anim.forward_anim);
@@ -871,10 +875,7 @@ public class VideoPlayerEXO extends AppCompatActivity {
     }
 
 
-
-
-
-/////////////////////////////////////////////////////////////----------------------------------------------------------
+    /////////////////////////////////////////////////////////////----------------------------------------------------------
     private void setPlaybackSpeed(float speed) {
         PlaybackParameters playbackParameters = new PlaybackParameters(speed);
         player.setPlaybackParameters(playbackParameters);
@@ -887,27 +888,27 @@ public class VideoPlayerEXO extends AppCompatActivity {
         if (existingItem != null) {
             databaseHelper.hisWatchDao().deleteHistoryItem(databaseHelper.hisWatchDao().getHistoryItemByPath(String.valueOf(videoUri)));
         }
-        databaseHelper.hisWatchDao().insertHistoryItem(new TableClass.HistoryItem(String.valueOf(videoUri),videoFileName,formatTime(totalDuration),currentPosition,size,resolution,sub_title_pot,rating));
+        databaseHelper.hisWatchDao().insertHistoryItem(new TableClass.HistoryItem(String.valueOf(videoUri), videoFileName, formatTime(totalDuration), currentPosition, size, resolution, sub_title_pot, rating));
         videoUri = null;
         if (player != null) {
             player.release();
             player = null;
         }
 
-        if( intent.getSerializableExtra("movie_info") != null){
+        if (intent.getSerializableExtra("movie_info") != null) {
             movieInfo = (MovieInfo) intent.getSerializableExtra("movie_info");
             videoUri = Uri.parse(movieInfo.getVideoPath());
-            if(movieInfo.getVideoPath().startsWith("http")){
+            if (movieInfo.getVideoPath().startsWith("http")) {
                 videoFileName = movieInfo.getTitle();
             }
             storylines = movieInfo.getStoryLines();
             artist = movieInfo.getArtists();
             genre = movieInfo.getGenre();
-            if(videoFileName == null){
+            if (videoFileName == null) {
                 videoFileName = movieInfo.getDisplayName();
             }
             sub_title_pot = movieInfo.getSubText();
-            if(movieInfo.getRating() != null){
+            if (movieInfo.getRating() != null) {
                 rating = movieInfo.getRating();
             }
             releaseDate = movieInfo.getReleaseDate();
@@ -937,8 +938,6 @@ public class VideoPlayerEXO extends AppCompatActivity {
 
             DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(this)
                     .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
-            
-
 
 
             player = new SimpleExoPlayer.Builder(this, renderersFactory)
@@ -988,10 +987,13 @@ public class VideoPlayerEXO extends AppCompatActivity {
 
             // Start video playback
             player.setPlayWhenReady(true);
-            if(size==null || videoFileName ==null || resolution == null){
-                Log.e("nullvalue", "nullvalue: "+ (size +videoFileName + resolution +videoFileName));
+            if (size == null || videoFileName == null || resolution == null) {
+                Log.e("nullvalue", "nullvalue: " + (size + videoFileName + resolution + videoFileName));
                 getMediaData(videoUri);
             }
+
+            telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+            telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE);
         } else {
             // Release the existing player to play a new video
 
@@ -1018,6 +1020,7 @@ public class VideoPlayerEXO extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "Source down or URL error", Toast.LENGTH_SHORT).show();
                 onBackPressed();
             }
+
             @Override
             public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
                 if (playbackState == Player.STATE_ENDED) {
@@ -1038,22 +1041,22 @@ public class VideoPlayerEXO extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if(isFullScreen){
+        if (isFullScreen) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             exitFullScreenMode();
             undefinedOrientation();
-        }else{
+        } else {
             super.onBackPressed();
         }
 
     }
 
     private class RetrieveMetadataTask extends AsyncTask<Void, Void, Void> {
-    private Uri videoUri;
+        private Uri videoUri;
 
-    public RetrieveMetadataTask(Uri videoUri) {
-        this.videoUri = videoUri;
-    }
+        public RetrieveMetadataTask(Uri videoUri) {
+            this.videoUri = videoUri;
+        }
 
         @Override
         protected Void doInBackground(Void... voids) {
@@ -1061,7 +1064,7 @@ public class VideoPlayerEXO extends AppCompatActivity {
 
             try {
                 String videoUrl = videoUri.toString();
-                if(videoFileName == null){
+                if (videoFileName == null) {
                     videoFileName = getFileNameFromUri(videoUri);
                 }
 
@@ -1079,12 +1082,12 @@ public class VideoPlayerEXO extends AppCompatActivity {
                         String videoFilePath = videoFile.getAbsolutePath();
 
                         retriever.setDataSource(videoFilePath);
-                        if(resolution == null){
+                        if (resolution == null) {
                             resolution = (retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
-                                    +"x"+
+                                    + "x" +
                                     retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
                         }
-                        if(size == null){
+                        if (size == null) {
                             size = formatFileSize(videoFile.length());
                         }
 
@@ -1162,21 +1165,20 @@ public class VideoPlayerEXO extends AppCompatActivity {
 
 
     }
+
     private void toggleFullScreen() {
-        if(isFullScreen)
-        {
-            if(flagOrientation == 0){
+        if (isFullScreen) {
+            if (flagOrientation == 0) {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             }
             exitFullScreenMode();
             undefinedOrientation();
-        }
-        else{
-            if(isAutoRotateEnabled(this)){
+        } else {
+            if (isAutoRotateEnabled(this)) {
                 undefinedOrientation();
             }
 
-            if(flagOrientation == 0){
+            if (flagOrientation == 0) {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
             }
@@ -1196,9 +1198,10 @@ public class VideoPlayerEXO extends AppCompatActivity {
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
                 }
-            },2000);
+            }, 2000);
         }
     }
+
     public static boolean isAutoRotateEnabled(Context context) {
         try {
             // Get the current system setting for auto-rotate
@@ -1229,6 +1232,7 @@ public class VideoPlayerEXO extends AppCompatActivity {
         }
 
     }
+
     private void enterFullScreenMode() {
         // Hide the status bar and navigation bar for full-screen mode
         getWindow().getDecorView().setSystemUiVisibility(
@@ -1239,7 +1243,6 @@ public class VideoPlayerEXO extends AppCompatActivity {
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
         );
-
 
 
         // Update the layout parameters of the RelativeLayout for full-screen mode
@@ -1268,13 +1271,13 @@ public class VideoPlayerEXO extends AppCompatActivity {
         isFullScreen = false;
         hideControls();
     }
-    public void hideControls(){
-        if(isFullScreen){
+
+    public void hideControls() {
+        if (isFullScreen) {
             playerView.findViewById(R.id.portraitcontrol).setVisibility(View.GONE);
             playerView.findViewById(R.id.landscapcontrol).setVisibility(View.VISIBLE);
             playerView.findViewById(R.id.video_Title).setVisibility(View.VISIBLE);
-        }
-        else{
+        } else {
             playerView.findViewById(R.id.landscapcontrol).setVisibility(View.GONE);
             playerView.findViewById(R.id.portraitcontrol).setVisibility(View.VISIBLE);
             playerView.findViewById(R.id.video_Title).setVisibility(View.INVISIBLE);
@@ -1323,7 +1326,7 @@ public class VideoPlayerEXO extends AppCompatActivity {
     @Override
     protected void onUserLeaveHint() {
 
-        if(isFullScreen)
+        if (isFullScreen)
             enterpipmode();
         super.onUserLeaveHint();
     }
@@ -1361,6 +1364,7 @@ public class VideoPlayerEXO extends AppCompatActivity {
             if (Objects.equals(intent.getAction(), "com.reward.videoplayer.TOGGLE_PLAY_PAUSEs")) {
                 togglePlayPausepip();
             }
+
         }
     }
 
@@ -1385,8 +1389,6 @@ public class VideoPlayerEXO extends AppCompatActivity {
     }
 
 
-
-
     private void togglePlayPausepip() {
         if (player != null) {
             if (player.isPlaying()) {
@@ -1405,12 +1407,11 @@ public class VideoPlayerEXO extends AppCompatActivity {
     }
 
     @Override
-    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode,Configuration configuration) {
-        super.onPictureInPictureModeChanged(isInPictureInPictureMode,configuration);
-        if(isInPictureInPictureMode){
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, Configuration configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, configuration);
+        if (isInPictureInPictureMode) {
             playerView.findViewById(R.id.controlsLayout).setVisibility(View.GONE);
-        }
-        else {
+        } else {
             playerView.findViewById(R.id.controlsLayout).setVisibility(View.VISIBLE);
             player.pause();
             isPlayingInPiP = false;
@@ -1418,11 +1419,9 @@ public class VideoPlayerEXO extends AppCompatActivity {
     }
 
 
-
-
     private void showPopup(int settab) {
 
-        if(player.isPlaying()){
+        if (player.isPlaying()) {
             togglePlayPause();
         }
         dialog = new Dialog(this);
@@ -1453,7 +1452,7 @@ public class VideoPlayerEXO extends AppCompatActivity {
                 View layoutView1 = viewPager.getChildAt(0);
                 View layoutView2 = viewPager.getChildAt(1);
 
-                if(layoutView1 != null) {
+                if (layoutView1 != null) {
                     setVideoQualityCustomButtonLayout(dialog.getContext(), R.layout.layout_quality, layoutView1);
                 }
 
@@ -1487,7 +1486,7 @@ public class VideoPlayerEXO extends AppCompatActivity {
         });
         dialog.getWindow().getAttributes().windowAnimations = R.style.PopupAnimation;
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        if(isFullScreen){
+        if (isFullScreen) {
             // Add margins to the existing tab views
             for (int i = 0; i < tabLayout.getTabCount(); i++) {
                 TabLayout.Tab tab = tabLayout.getTabAt(i);
@@ -1503,11 +1502,9 @@ public class VideoPlayerEXO extends AppCompatActivity {
                 }
             }
             dialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        }
-        else{
+        } else {
             dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
-
 
 
         dialog.getWindow().setGravity(Gravity.BOTTOM);
@@ -1515,9 +1512,6 @@ public class VideoPlayerEXO extends AppCompatActivity {
         imageViews.clear();
         textViews.clear();
     }
-
-
-
 
 
     private int findAudioRendererIndex(MappingTrackSelector.MappedTrackInfo mappedTrackInfo) {
@@ -1529,28 +1523,32 @@ public class VideoPlayerEXO extends AppCompatActivity {
         }
         return -1; // Return a value indicating that no audio renderer was found
     }
+
     private String[] getAudioTrackNames() {
         MappingTrackSelector.MappedTrackInfo mappedTrackInfo = trackSelector.getCurrentMappedTrackInfo();
 
         if (mappedTrackInfo != null) {
             int rendererIndexAudio = findAudioRendererIndex(mappedTrackInfo);
-            TrackGroupArray audioTracks = mappedTrackInfo.getTrackGroups(rendererIndexAudio);
+            if (rendererIndexAudio != -1) {
+                TrackGroupArray audioTracks = mappedTrackInfo.getTrackGroups(rendererIndexAudio);
 
-            if (audioTracks != null && audioTracks.length > 0) {
-                String[] audioTrackNames = new String[audioTracks.length];
+                if (audioTracks != null && audioTracks.length > 0) {
+                    String[] audioTrackNames = new String[audioTracks.length];
 
-                for (int i = 0; i < audioTracks.length; i++) {
-                    Format format = audioTracks.get(i).getFormat(0); // Assuming single track
-                    audioTrackNames[i] = format.language; // Use appropriate field based on your video format
+                    for (int i = 0; i < audioTracks.length; i++) {
+                        Format format = audioTracks.get(i).getFormat(0); // Assuming single track
+                        audioTrackNames[i] = format.language; // Use appropriate field based on your video format
+                    }
+
+                    return audioTrackNames;
                 }
-
-                return audioTrackNames;
             }
         }
 
         return new String[0]; // Return an empty array if no audio tracks are available
     }
-    public void set_Audio_CustomButtonLayout(Context context,int layoutId,View layoutView ) {
+
+    public void set_Audio_CustomButtonLayout(Context context, int layoutId, View layoutView) {
 
         if (layoutId == R.layout.layout_audio_language) {
             LinearLayout buttonContainer = layoutView.findViewById(R.id.button_container_audio);
@@ -1587,8 +1585,6 @@ public class VideoPlayerEXO extends AppCompatActivity {
                 textViews.add(textView);
 
 
-
-
                 // Set click listener for the custom button
                 final int trackIndex = i + 1;
                 customButtonLayout.setOnClickListener(new View.OnClickListener() {
@@ -1620,16 +1616,11 @@ public class VideoPlayerEXO extends AppCompatActivity {
     }
 
     public void setAudioTrack(int track) {
-
-
-        System.out.println("setAudioTrack: " + track);
-
         // Get the currently available track information
         MappingTrackSelector.MappedTrackInfo mappedTrackInfo = Assertions.checkNotNull(trackSelector.getCurrentMappedTrackInfo());
 
         // Get the current parameters of the track selector
         DefaultTrackSelector.Parameters parameters = trackSelector.getParameters();
-
         // Create a builder to modify the current parameters
         DefaultTrackSelector.Parameters.Builder builder = parameters.buildUpon();
 
@@ -1638,26 +1629,32 @@ public class VideoPlayerEXO extends AppCompatActivity {
             int trackType = mappedTrackInfo.getRendererType(rendererIndex);
 
             // Check if the track is an audio track
-            if (trackType == C.TRACK_TYPE_AUDIO ) {
-                // Enable the renderer and clear any previous track selections
-                builder.clearSelectionOverrides(rendererIndex).setRendererDisabled(rendererIndex, false);
+            if (trackType == C.TRACK_TYPE_AUDIO) {
+                TrackGroupArray trackGroups = mappedTrackInfo.getTrackGroups(rendererIndex);
+                if (trackGroups.length > 0) {
+                    // Enable the renderer and clear any previous track selections
+                    builder.clearSelectionOverrides(rendererIndex).setRendererDisabled(rendererIndex, false);
 
-                // Calculate the group index and track index based on the given track parameter
-                int groupIndex = track - 1;  // Assuming the parameter 'track' is one-based index
-                int[] tracks = {0};  // Select the first track by default
+                    // Calculate the group index and track index based on the given track parameter
+                    int groupIndex = track - 1;  // Assuming the parameter 'track' is one-based index
+                    if (groupIndex < trackGroups.length) {
+                        int[] tracks = {0};  // Select the first track by default
 
-                // Create a selection override for the audio track
-                DefaultTrackSelector.SelectionOverride override = new DefaultTrackSelector.SelectionOverride(groupIndex, tracks);
+                        // Create a selection override for the audio track
+                        DefaultTrackSelector.SelectionOverride override = new DefaultTrackSelector.SelectionOverride(groupIndex, tracks);
 
-                // Apply the selection override to the renderer
-                builder.setSelectionOverride(rendererIndex, mappedTrackInfo.getTrackGroups(rendererIndex), override);
+                        // Apply the selection override to the renderer
+                        builder.setSelectionOverride(rendererIndex, trackGroups, override);
+                    } else {
+                        // Handle the case where the groupIndex is out of bounds
+                        Log.e("ExoPlayer", "Invalid group index: " + groupIndex);
+                    }
+                }
             }
         }
 
         // Set the modified parameters to the track selector
-        trackSelector.setParameters(parameters); // Corrected to builder.build()
-
-
+        trackSelector.setParameters(builder.build());
         // Update the currently selected audio track
         currentAudioTrack = track;
         // Manually update the color and image visibility for all language buttons
@@ -1675,7 +1672,6 @@ public class VideoPlayerEXO extends AppCompatActivity {
             }
         }
     }
-
 
 
     // Parse the master.m3u8 playlist to get available video quality options
@@ -1746,12 +1742,10 @@ public class VideoPlayerEXO extends AppCompatActivity {
     }
 
 
-
     // Create and customize UI buttons for video quality options
     public void setVideoQualityCustomButtonLayout(Context context, int layoutId, View layoutView) {
         if (layoutId == R.layout.layout_quality) {
             LinearLayout buttonContainer = layoutView.findViewById(R.id.button_container_video);
-
 
 
             for (int i = 0; i < qualityOptions.size(); i++) {
@@ -1855,7 +1849,6 @@ public class VideoPlayerEXO extends AppCompatActivity {
     }
 
 
-
     public static int getVideoOrientation(Context context, Uri videoPath) {
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         try {
@@ -1893,7 +1886,7 @@ public class VideoPlayerEXO extends AppCompatActivity {
     private int findSubtitleRendererIndex(MappingTrackSelector.MappedTrackInfo mappedTrackInfo) {
         for (int i = 0; i < mappedTrackInfo.getRendererCount(); i++) {
             int trackType = mappedTrackInfo.getRendererType(i);
-            if (trackType == C.TRACK_TYPE_AUDIO) {
+            if (trackType == C.TRACK_TYPE_TEXT) {
                 return i; // Return the index of the subtitle renderer
             }
         }
@@ -1963,12 +1956,11 @@ public class VideoPlayerEXO extends AppCompatActivity {
                 customButtonLayout2.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        if(trackIndex == currentSubtitleTrack){
+                        if (trackIndex == currentSubtitleTrack) {
                             imageView.setVisibility(View.INVISIBLE);
                             textView.setTextColor(Color.GRAY);
-                            setSubtitleTrack( -1 );
-                        }
-                        else{
+                            setSubtitleTrack(-1);
+                        } else {
                             setSubtitleTrack(trackIndex);
                             if (trackIndex == currentSubtitleTrack) {
                                 imageView.setVisibility(View.VISIBLE);
@@ -1998,16 +1990,17 @@ public class VideoPlayerEXO extends AppCompatActivity {
             }
         }
     }
+
     public void setSubtitleTrack(int track) {
 
-        if(track ==  -1 ){
+        if (track == -1) {
 
             trackSelector.setParameters(new DefaultTrackSelector.ParametersBuilder()
                     .setRendererDisabled(C.TRACK_TYPE_TEXT, true)
                     .build()
             );
             currentSubtitleTrack = -1;
-        }else{
+        } else {
             trackSelector.setParameters(new DefaultTrackSelector.ParametersBuilder()
                     .setRendererDisabled(C.TRACK_TYPE_TEXT, false)
                     .build()
@@ -2050,7 +2043,12 @@ public class VideoPlayerEXO extends AppCompatActivity {
         }
 
 
+    }
 
+    private void setupPhoneStateListener() {
+        phoneStateListener = new PhoneStateListenerImpl(player);
+        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
     }
 
 
@@ -2063,16 +2061,17 @@ public class VideoPlayerEXO extends AppCompatActivity {
         }
 
     }
+
     @Override
     protected void onStop() {
         super.onStop();
-        if(isPlayingInPiP){
-            Log.d("onDestroy","onDestroy function called ");
+        if (isPlayingInPiP) {
+            Log.d("onDestroy", "onDestroy function called ");
             TableClass.HistoryItem existingItem = databaseHelper.hisWatchDao().getHistoryItemByPath(String.valueOf(videoUri));
             if (existingItem != null) {
                 databaseHelper.hisWatchDao().deleteHistoryItem(databaseHelper.hisWatchDao().getHistoryItemByPath(String.valueOf(videoUri)));
             }
-            databaseHelper.hisWatchDao().insertHistoryItem(new TableClass.HistoryItem(String.valueOf(videoUri),videoFileName,formatTime(totalDuration),currentPosition,size,resolution,sub_title_pot,rating));
+            databaseHelper.hisWatchDao().insertHistoryItem(new TableClass.HistoryItem(String.valueOf(videoUri), videoFileName, formatTime(totalDuration), currentPosition, size, resolution, sub_title_pot, rating));
             if (player != null) {
                 player.release();
                 player = null;
@@ -2097,7 +2096,7 @@ public class VideoPlayerEXO extends AppCompatActivity {
         if (existingItem != null) {
             databaseHelper.hisWatchDao().deleteHistoryItem(databaseHelper.hisWatchDao().getHistoryItemByPath(String.valueOf(videoUri)));
         }
-        databaseHelper.hisWatchDao().insertHistoryItem(new TableClass.HistoryItem(String.valueOf(videoUri),videoFileName,formatTime(totalDuration),currentPosition,size,resolution,sub_title_pot,rating));
+        databaseHelper.hisWatchDao().insertHistoryItem(new TableClass.HistoryItem(String.valueOf(videoUri), videoFileName, formatTime(totalDuration), currentPosition, size, resolution, sub_title_pot, rating));
     }
 
 
@@ -2111,22 +2110,22 @@ public class VideoPlayerEXO extends AppCompatActivity {
             exitFullScreenMode();
         }
 
-        player.play();
-        togglePlayPause();
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == ACTION_MANAGE_WRITE_SETTINGS_CODE){
+        if (requestCode == ACTION_MANAGE_WRITE_SETTINGS_CODE) {
             boolean value;
             value = Settings.System.canWrite(getApplicationContext());
-            if(value){
+            if (value) {
                 success = true;
-            }
-            else{
+            } else {
                 Toast.makeText(this, "Not Granted", Toast.LENGTH_LONG).show();
             }
         }
     }
+
+
+
 }
