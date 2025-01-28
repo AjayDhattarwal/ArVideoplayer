@@ -1,6 +1,7 @@
 # Ar Player - The Ultimate Video Player
 ![Java](https://img.shields.io/badge/Java-ED8B00?style=plastic&logo=java&logoColor=white)
-[![Mi App Store](https://img.shields.io/badge/Mi%20App%20Store-Download-orange?style=plastic&logo=xiaomi&logoColor=white)]([https://app.mi.com](https://global.app.mi.com/details?lo=IN&la=en&id=com.ar.videoplayer))
+[![Mi App Store](https://img.shields.io/badge/Mi%20App%20Store-Download-orange?style=plastic&logo=xiaomi&logoColor=white)](https://global.app.mi.com/details?lo=IN&la=en&id=com.ar.videoplayer)
+
 
 
 ## Overview
@@ -20,7 +21,8 @@ Ar Player is a lightweight, feature-rich video player app that allows users to p
 - **Picture-in-Picture (Pip) Mode**: Continue watching videos while using other apps.
 
 ## Download 
-[![Mi App Store](https://img.shields.io/badge/Mi%20App%20Store-Download-orange?style=plastic&logo=xiaomi&logoColor=white)]([https://app.mi.com](https://global.app.mi.com/details?lo=IN&la=en&id=com.ar.videoplayer))
+[![Mi App Store](https://img.shields.io/badge/Mi%20App%20Store-Download-orange?style=plastic&logo=xiaomi&logoColor=white)](https://global.app.mi.com/details?lo=IN&la=en&id=com.ar.videoplayer)
+
 
 Get Ar Player from the Mi App Store. 
 
